@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+    name: myapp-deploy
+    namespace: myns
+    labels:
+        name: myapp-deploy
+        tier: app
+        version: "v1"
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            name: myapp-svc
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxSurge: 1
+            maxUnavailable: 1
+    template:
+        metadata:
+            name: myapp-svc
+            labels:
+                name: myapp-svc
+        spec:
+            containers:
+            - name: myapp-svc
+              image: stackupiss/northwind-app:v2
+              imagePullPolicy: Always
+              env:
+              - name: DB_PASSWORD
+                valueFrom:
+                    secretKeyRef:
+                        name: db-secret
+                        key: MYSQL_ROOT_PASSWORD
+              - name: INSTANCE_IP_ADDRESS
+                valueFrom:
+                    fieldRef:
+                        fieldPath: status.podIP
+
+              envFrom: 
+                - configMapRef: 
+                    name: app-configmap
+                - secretRef:
+                    name: db-secret
+              ports:
+                - name: app-http
+                  containerPort: 3000
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "16Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "500Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: app-httpservice
+    namespace: myns
+    labels:
+        name: app-httpservice
+
+spec:
+    type: LoadBalancer
+    selector: 
+        name: myapp-svc
+    ports:
+    - name: http
+      port: 80
+      targetPort: app-http
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: app-configmap
+    namespace: myns
+    labels:
+        name: app-configmap
+data:
+    #APP_ID: c302f50625bf707080c189724808943a
+    MYSQL_DATABASE: northwind
+    DB_USER: root
+    DB_HOST: db-httpservice.myns.svc.cluster.local
