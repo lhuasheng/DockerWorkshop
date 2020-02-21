@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  weatherapp
+  labels:
+    name:  weatherapp
+    
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      name: weatherapp
+  template:
+    metadata:
+      labels:
+        name:  weatherapp
+    spec:
+      containers:
+      - image:  stackupiss/weather:v1
+        name:  weatherapp
+        env: 
+        - name: APP_ID
+          value: c302f50625bf707080c189724808943a
+        - name: APP_DEFAULT_CITY
+          value: Singapore
+        ports:
+        - name: http
+          containerPort: 3000
+        resources:
+          requests:
+              cpu: "50m"
+              memory: "16Mi"
+          limits:
+              cpu: "100m"
+              memory: "32Mi"

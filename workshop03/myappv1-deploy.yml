@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  myappv1
+  labels:
+    name:  myapp
+    version: v1
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      name: myapp
+      version: v1
+  template:
+    metadata:
+      labels:
+        name:  myapp
+        version: v1
+    spec:
+      containers:
+      - image: stackupiss/northwind-app:v1
+        name:  myapp
+        resources:
+          requests:
+            cpu: "20m"
+            memory: "55M"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        env:
+        - name:  "DB_HOST"
+          value:  "mydb-service.default.svc.cluster.local"
+        - name:  "DB_PORT"
+          value:  "3306"
+        - name:  "DB_USER"
+          value:  "root"       
+        - name:  "DB_PASSWORD"
+          value:  "changeit"                   
+        ports:
+        - containerPort:  3000
+          name:  myappport
+        imagePullPolicy: Always
+      restartPolicy: Always
+      

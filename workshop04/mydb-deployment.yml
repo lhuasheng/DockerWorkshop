@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  mydb-deployment
+  labels:
+    name:  mydb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydb
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  mydb
+    spec:
+      volumes:
+        - name: dbvol
+          persistentVolumeClaim:
+              claimName: mydb-pvc
+
+      # ## init containers here will alway purge the pod clean whenever this pod is loaded
+      # initContainers:
+      #   - name: scrub-container
+      #     image: busybox
+      #     command: ["/bin/sh", "-c", "test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z \"$(ls -A /scrub)\" || exit 1"]
+      #     volumeMounts:
+      #       - mountPath: /scrub
+      #         name: dbvol
+      containers:
+      - image:  stackupiss/northwind-db:v1
+        name:  mydb
+        env:
+        - name:  "MYSQL_ROOT_PASSWORD"
+          value: "changeit"
+        - name: "MYSQL_DATABASE"
+          value: "northwind"
+        ports:
+        - containerPort:  3306
+          name:  mydb-port
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: dbvol
+      
+
+# ---
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: myapp
+#   labels:
+#     app: myapp
+# spec:
+#   volumes:
+#     - name: dbvol
+#       persistentVolumeClaim:
+#           claimName: mydb-pvc
+#   containers:
+#   - name: scrub-container
+#     image: busybox
+#     command: ["/bin/sh", "-c", "test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z \"$(ls -A /scrub)\" || exit 1"]
+#     volumeMounts:
+#       - mountPath: /scrub
+#         name: dbvol
+
+
+
+      # ## init containers here will alway purge the pod clean whenever this pod is loaded
+      # initContainers:
+      #   - name: scrub-container
+      #     image: busybox
+      #     command: ["/bin/sh", "-c", "test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z \"$(ls -A /scrub)\" || exit 1"]
+      #     volumeMounts:
+      #       - mountPath: /scrub
+      #         name: dbvol
+  

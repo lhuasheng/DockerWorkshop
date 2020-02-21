@@ -1,0 +1,70 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: weather-gw
+
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts: 
+    - weather.159.89.211.132.nip.io
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: weather-vs
+
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - weather-gw.default.svc.cluster.local
+  http:
+  - match:
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: weathersvc.default.svc.cluster.local
+    rewrite:
+      uri: /
+  - match:
+    - uri:
+        prefix: /weather
+    route:
+    - destination:
+        host: weathersvc.default.svc.cluster.local
+  - match:
+    - uri:
+        exact: /fortune
+    route:
+    - destination:
+        host: fortunesvc.default.svc.cluster.local
+
+    
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: weather-egress
+
+spec:
+  hosts:
+  - api.openweathermap.org
+  ports:
+  - number: 80
+    protocol: HTTP
+    name: http
+  - number: 443
+    protocol: HTTPS
+    name: https
+  location: MESH_EXTERNAL
+  resolution: DNS

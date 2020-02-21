@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name:  weathersvc
+spec:
+  selector:
+    name:  weatherapp
+  type:  ClusterIP
+  ports:
+  - name:  appport
+    port:  80
+    targetPort:  3000

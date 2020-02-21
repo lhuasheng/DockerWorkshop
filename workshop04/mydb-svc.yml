@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+    name: mydb-service
+
+spec:
+    selector:
+        app: mydb
+    type: ClusterIP
+    ports:
+    - name: dbport
+      port: 3306
+      targetPort: 3306
